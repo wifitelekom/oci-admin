@@ -216,20 +216,20 @@
             <div class="p-4 border-t border-dark-700/50">
                 <div class="glass rounded-xl p-4">
                     <div class="flex items-center justify-between mb-3">
-                        <span class="text-sm text-dark-400">Bot Status</span>
+                        <span class="text-sm text-dark-400">Bots Status</span>
                         <div id="bot-status-indicator" class="flex items-center gap-2">
                             <span class="w-2 h-2 rounded-full bg-dark-500"></span>
-                            <span class="text-xs text-dark-400">Offline</span>
+                            <span class="text-xs text-dark-400">0 / 0</span>
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button id="btn-start-bot" onclick="startBot()" class="flex-1 py-2 px-3 rounded-lg bg-success/20 text-success hover:bg-success/30 text-sm font-medium transition-all flex items-center justify-center gap-2">
+                        <button onclick="startAllBots()" class="flex-1 py-2 px-3 rounded-lg bg-success/20 text-success hover:bg-success/30 text-sm font-medium transition-all flex items-center justify-center gap-2">
                             <i data-lucide="play" class="w-4 h-4"></i>
-                            Start
+                            Start All
                         </button>
-                        <button id="btn-stop-bot" onclick="stopBot()" class="flex-1 py-2 px-3 rounded-lg bg-danger/20 text-danger hover:bg-danger/30 text-sm font-medium transition-all flex items-center justify-center gap-2">
+                        <button onclick="stopAllBots()" class="flex-1 py-2 px-3 rounded-lg bg-danger/20 text-danger hover:bg-danger/30 text-sm font-medium transition-all flex items-center justify-center gap-2">
                             <i data-lucide="square" class="w-4 h-4"></i>
-                            Stop
+                            Stop All
                         </button>
                     </div>
                 </div>
@@ -280,49 +280,48 @@
             updateBotStatusIndicator(status);
         });
         
-        // Update bot status indicator
-        function updateBotStatusIndicator(status) {
+        // Update bot status indicator for multi-account
+        function updateBotStatusIndicator(data) {
             const indicator = document.getElementById('bot-status-indicator');
-            if (indicator) {
-                if (status.running) {
+            if (indicator && data) {
+                const running = data.running || 0;
+                const total = data.total || 0;
+                
+                if (running > 0) {
                     indicator.innerHTML = `
                         <span class="w-2 h-2 rounded-full bg-success status-dot"></span>
-                        <span class="text-xs text-success">Running</span>
+                        <span class="text-xs text-success">${running} / ${total}</span>
                     `;
                 } else {
                     indicator.innerHTML = `
                         <span class="w-2 h-2 rounded-full bg-dark-500"></span>
-                        <span class="text-xs text-dark-400">Offline</span>
+                        <span class="text-xs text-dark-400">${running} / ${total}</span>
                     `;
                 }
             }
         }
         
-        // Start bot
-        async function startBot() {
+        // Start all bots
+        async function startAllBots() {
             try {
-                const response = await fetch('/api/bot/start', { method: 'POST' });
+                const response = await fetch('/api/bot/start-all', { method: 'POST' });
                 const data = await response.json();
                 showToast(data.message, data.success ? 'success' : 'error');
-                if (data.success) {
-                    updateBotStatusIndicator(data.status);
-                }
+                fetchBotStatus();
             } catch (error) {
-                showToast('Failed to start bot', 'error');
+                showToast('Failed to start bots', 'error');
             }
         }
         
-        // Stop bot
-        async function stopBot() {
+        // Stop all bots
+        async function stopAllBots() {
             try {
-                const response = await fetch('/api/bot/stop', { method: 'POST' });
+                const response = await fetch('/api/bot/stop-all', { method: 'POST' });
                 const data = await response.json();
                 showToast(data.message, data.success ? 'success' : 'error');
-                if (data.success) {
-                    updateBotStatusIndicator(data.status);
-                }
+                fetchBotStatus();
             } catch (error) {
-                showToast('Failed to stop bot', 'error');
+                showToast('Failed to stop bots', 'error');
             }
         }
         
@@ -365,15 +364,19 @@
         // Fetch initial bot status
         async function fetchBotStatus() {
             try {
-                const response = await fetch('/api/status');
+                const response = await fetch('/api/dashboard-stats');
                 const data = await response.json();
-                updateBotStatusIndicator(data.bot);
+                updateBotStatusIndicator({
+                    running: data.running_bots || 0,
+                    total: data.total_accounts || 0
+                });
             } catch (error) {
                 console.error('Failed to fetch bot status');
             }
         }
         
         fetchBotStatus();
+        setInterval(fetchBotStatus, 10000);
     </script>
     
     {% block scripts %}{% endblock %}
