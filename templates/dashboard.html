@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - OCI Manager{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-white mb-1">Dashboard</h1>
+            <p class="text-dark-400">Overview of all your Oracle Cloud accounts</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="refreshDashboard()" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-dark-800 border border-dark-700 hover:border-accent-primary/50 text-dark-300 hover:text-white transition-all">
+                <i data-lucide="refresh-cw" class="w-4 h-4" id="refresh-icon"></i>
+                <span>Refresh</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Total Accounts -->
+        <div class="glass rounded-2xl p-6 card-hover">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl bg-info/20 flex items-center justify-center">
+                    <i data-lucide="users" class="w-6 h-6 text-info"></i>
+                </div>
+            </div>
+            <h3 class="text-dark-400 text-sm mb-1">Total Accounts</h3>
+            <p class="text-2xl font-bold text-white" id="total-accounts">0</p>
+        </div>
+        
+        <!-- Running Bots -->
+        <div class="glass rounded-2xl p-6 card-hover">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl bg-success/20 flex items-center justify-center">
+                    <i data-lucide="bot" class="w-6 h-6 text-success"></i>
+                </div>
+            </div>
+            <h3 class="text-dark-400 text-sm mb-1">Running Bots</h3>
+            <p class="text-2xl font-bold text-white" id="running-bots">0</p>
+        </div>
+        
+        <!-- Total Retries -->
+        <div class="glass rounded-2xl p-6 card-hover">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl bg-warning/20 flex items-center justify-center">
+                    <i data-lucide="repeat" class="w-6 h-6 text-warning"></i>
+                </div>
+            </div>
+            <h3 class="text-dark-400 text-sm mb-1">Total Retries</h3>
+            <p class="text-2xl font-bold text-white" id="total-retries">0</p>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="glass rounded-2xl p-6 card-hover">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl bg-accent-primary/20 flex items-center justify-center">
+                    <i data-lucide="zap" class="w-6 h-6 text-accent-primary"></i>
+                </div>
+            </div>
+            <h3 class="text-dark-400 text-sm mb-3">Quick Actions</h3>
+            <div class="flex gap-2">
+                <button onclick="startAllBots()" class="flex-1 py-2 px-3 rounded-lg bg-success/20 text-success hover:bg-success/30 text-xs font-medium transition-all">
+                    Start All
+                </button>
+                <button onclick="stopAllBots()" class="flex-1 py-2 px-3 rounded-lg bg-danger/20 text-danger hover:bg-danger/30 text-xs font-medium transition-all">
+                    Stop All
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Accounts Grid -->
+    <div class="glass rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                <i data-lucide="server" class="w-5 h-5 text-accent-primary"></i>
+                Accounts
+            </h3>
+            <a href="{{ url_for('accounts_page') }}" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary text-white text-sm font-medium hover:shadow-lg hover:shadow-accent-primary/30 transition-all">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                Add Account
+            </a>
+        </div>
+        
+        <div id="accounts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="col-span-full text-center py-12 text-dark-500">
+                <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-3"></i>
+                <p>Loading accounts...</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Logs Preview -->
+    <div class="glass rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                <i data-lucide="terminal" class="w-5 h-5 text-accent-primary"></i>
+                Recent Logs (All Accounts)
+            </h3>
+            <a href="{{ url_for('logs_page') }}" class="text-sm text-accent-primary hover:text-accent-secondary transition-colors flex items-center gap-1">
+                View All
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </a>
+        </div>
+        <div id="recent-logs" class="log-terminal bg-dark-900 rounded-xl p-4 h-64 overflow-y-auto space-y-1">
+            <div class="text-dark-500 text-center py-8">No logs yet</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Refresh dashboard
+    async function refreshDashboard() {
+        const icon = document.getElementById('refresh-icon');
+        icon.classList.add('animate-spin');
+        
+        try {
+            const response = await fetch('/api/dashboard-stats');
+            const data = await response.json();
+            
+            document.getElementById('total-accounts').textContent = data.total_accounts;
+            document.getElementById('running-bots').textContent = data.running_bots;
+            document.getElementById('total-retries').textContent = data.total_retries;
+            
+            renderAccounts(data.accounts);
+            
+        } catch (error) {
+            console.error('Failed to refresh dashboard:', error);
+            showToast('Failed to refresh dashboard', 'error');
+        }
+        
+        setTimeout(() => icon.classList.remove('animate-spin'), 500);
+    }
+    
+    // Render accounts grid
+    function renderAccounts(accounts) {
+        const grid = document.getElementById('accounts-grid');
+        
+        if (!accounts || accounts.length === 0) {
+            grid.innerHTML = `
+                <div class="col-span-full text-center py-12">
+                    <i data-lucide="inbox" class="w-16 h-16 text-dark-600 mx-auto mb-4"></i>
+                    <p class="text-dark-400 mb-4">No accounts configured yet</p>
+                    <a href="/accounts" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-medium hover:shadow-lg transition-all">
+                        <i data-lucide="plus" class="w-5 h-5"></i>
+                        Add Your First Account
+                    </a>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+        
+        grid.innerHTML = accounts.map(account => {
+            const isRunning = account.status?.running;
+            const statusClass = isRunning ? 'bg-success text-success' : 'bg-dark-600 text-dark-400';
+            const statusText = isRunning ? 'Running' : 'Stopped';
+            const retries = account.status?.retry_count || 0;
+            
+            return `
+                <div class="bg-dark-800/50 rounded-xl p-5 border border-dark-700/50 hover:border-accent-primary/30 transition-all">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-dark-700 flex items-center justify-center">
+                                <i data-lucide="cloud" class="w-5 h-5 text-accent-primary"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-white">${account.name}</h4>
+                                <p class="text-xs text-dark-500">${account.region}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full ${isRunning ? 'bg-success animate-pulse' : 'bg-dark-600'}"></span>
+                            <span class="text-xs ${isRunning ? 'text-success' : 'text-dark-500'}">${statusText}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-3 mb-4 text-center">
+                        <div class="bg-dark-900/50 rounded-lg py-2">
+                            <p class="text-lg font-bold text-white">${account.ocpus}</p>
+                            <p class="text-xs text-dark-500">OCPUs</p>
+                        </div>
+                        <div class="bg-dark-900/50 rounded-lg py-2">
+                            <p class="text-lg font-bold text-white">${account.memory}</p>
+                            <p class="text-xs text-dark-500">GB RAM</p>
+                        </div>
+                        <div class="bg-dark-900/50 rounded-lg py-2">
+                            <p class="text-lg font-bold text-white">${retries}</p>
+                            <p class="text-xs text-dark-500">Retries</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        ${isRunning ? `
+                            <button onclick="stopAccountBot('${account.id}')" class="flex-1 py-2 rounded-lg bg-danger/20 text-danger hover:bg-danger/30 text-sm font-medium transition-all flex items-center justify-center gap-2">
+                                <i data-lucide="square" class="w-4 h-4"></i>
+                                Stop
+                            </button>
+                        ` : `
+                            <button onclick="startAccountBot('${account.id}')" class="flex-1 py-2 rounded-lg bg-success/20 text-success hover:bg-success/30 text-sm font-medium transition-all flex items-center justify-center gap-2">
+                                <i data-lucide="play" class="w-4 h-4"></i>
+                                Start
+                            </button>
+                        `}
+                        <a href="/account/${account.id}" class="flex-1 py-2 rounded-lg bg-dark-700 hover:bg-dark-600 text-white text-sm font-medium transition-all flex items-center justify-center gap-2">
+                            <i data-lucide="eye" class="w-4 h-4"></i>
+                            View
+                        </a>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        lucide.createIcons();
+    }
+    
+    // Start account bot
+    async function startAccountBot(accountId) {
+        try {
+            const response = await fetch(`/api/accounts/${accountId}/bot/start`, { method: 'POST' });
+            const data = await response.json();
+            showToast(data.message, data.success ? 'success' : 'error');
+            if (data.success) refreshDashboard();
+        } catch (error) {
+            showToast('Failed to start bot', 'error');
+        }
+    }
+    
+    // Stop account bot
+    async function stopAccountBot(accountId) {
+        try {
+            const response = await fetch(`/api/accounts/${accountId}/bot/stop`, { method: 'POST' });
+            const data = await response.json();
+            showToast(data.message, data.success ? 'success' : 'error');
+            if (data.success) refreshDashboard();
+        } catch (error) {
+            showToast('Failed to stop bot', 'error');
+        }
+    }
+    
+    // Start all bots
+    async function startAllBots() {
+        try {
+            const response = await fetch('/api/bot/start-all', { method: 'POST' });
+            const data = await response.json();
+            showToast(data.message, 'success');
+            refreshDashboard();
+        } catch (error) {
+            showToast('Failed to start bots', 'error');
+        }
+    }
+    
+    // Stop all bots
+    async function stopAllBots() {
+        try {
+            const response = await fetch('/api/bot/stop-all', { method: 'POST' });
+            const data = await response.json();
+            showToast(data.message, 'success');
+            refreshDashboard();
+        } catch (error) {
+            showToast('Failed to stop bots', 'error');
+        }
+    }
+    
+    // Load recent logs
+    async function loadRecentLogs() {
+        try {
+            const response = await fetch('/api/logs');
+            const logs = await response.json();
+            updateRecentLogs(logs.slice(0, 15));
+        } catch (error) {
+            console.error('Failed to load logs');
+        }
+    }
+    
+    // Update recent logs display
+    function updateRecentLogs(logs) {
+        const container = document.getElementById('recent-logs');
+        
+        if (logs.length === 0) {
+            container.innerHTML = '<div class="text-dark-500 text-center py-8">No logs yet</div>';
+            return;
+        }
+        
+        container.innerHTML = logs.map(log => {
+            const levelColors = {
+                'INFO': 'text-info',
+                'WARNING': 'text-warning',
+                'ERROR': 'text-danger',
+                'CRITICAL': 'text-danger',
+                'DEBUG': 'text-dark-400'
+            };
+            const color = levelColors[log.level] || 'text-dark-300';
+            
+            return `
+                <div class="flex gap-3 py-1">
+                    <span class="text-dark-500 flex-shrink-0 text-xs">${log.timestamp}</span>
+                    <span class="${color} text-xs">${log.message}</span>
+                </div>
+            `;
+        }).join('');
+        
+        container.scrollTop = container.scrollHeight;
+    }
+    
+    // WebSocket log updates
+    socket.on('log_message', (log) => {
+        const container = document.getElementById('recent-logs');
+        if (container.querySelector('.text-center')) {
+            container.innerHTML = '';
+        }
+        
+        const levelColors = {
+            'INFO': 'text-info',
+            'WARNING': 'text-warning',
+            'ERROR': 'text-danger',
+            'CRITICAL': 'text-danger',
+            'DEBUG': 'text-dark-400'
+        };
+        const color = levelColors[log.level] || 'text-dark-300';
+        
+        const logEntry = document.createElement('div');
+        logEntry.className = 'flex gap-3 py-1 animate-fade-in';
+        logEntry.innerHTML = `
+            <span class="text-dark-500 flex-shrink-0 text-xs">${log.timestamp}</span>
+            <span class="${color} text-xs">${log.message}</span>
+        `;
+        container.appendChild(logEntry);
+        
+        while (container.children.length > 15) {
+            container.removeChild(container.firstChild);
+        }
+        
+        container.scrollTop = container.scrollHeight;
+    });
+    
+    socket.on('bot_status', (data) => {
+        refreshDashboard();
+    });
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+        refreshDashboard();
+        loadRecentLogs();
+        setInterval(refreshDashboard, 30000);
+    });
+</script>
+{% endblock %}

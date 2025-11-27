@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - OCI Manager{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-white mb-1">Settings</h1>
+            <p class="text-dark-400">Configure global panel settings</p>
+        </div>
+        <button onclick="saveSettings()" class="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-semibold hover:shadow-lg hover:shadow-accent-primary/30 transition-all transform hover:scale-[1.02] active:scale-[0.98]">
+            <i data-lucide="save" class="w-5 h-5"></i>
+            <span>Save Changes</span>
+        </button>
+    </div>
+    
+    <!-- Admin Credentials -->
+    <div class="glass rounded-2xl p-6">
+        <h3 class="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+            <i data-lucide="lock" class="w-5 h-5 text-accent-primary"></i>
+            Admin Credentials
+        </h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-medium text-dark-300 mb-2">Username</label>
+                <input type="text" id="WEB_USERNAME" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-3 px-4 text-white" placeholder="admin">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-dark-300 mb-2">New Password</label>
+                <input type="password" id="WEB_PASSWORD" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-3 px-4 text-white" placeholder="Leave empty to keep current">
+            </div>
+        </div>
+        
+        <div class="mt-4 p-4 bg-warning/10 border border-warning/30 rounded-xl">
+            <div class="flex items-start gap-3">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-warning flex-shrink-0 mt-0.5"></i>
+                <div class="text-sm text-dark-300">
+                    <p class="font-medium text-white mb-1">Security Notice</p>
+                    <p>After changing credentials, you'll need to log in again with the new username/password.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Panel Settings -->
+    <div class="glass rounded-2xl p-6">
+        <h3 class="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+            <i data-lucide="settings" class="w-5 h-5 text-accent-primary"></i>
+            Panel Settings
+        </h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-medium text-dark-300 mb-2">Accounts Directory</label>
+                <input type="text" id="ACCOUNTS_DIR" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-3 px-4 text-white font-mono" placeholder="./accounts">
+                <p class="text-xs text-dark-500 mt-2">Directory where account .env files are stored</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-dark-300 mb-2">Web Port</label>
+                <input type="number" id="WEB_PORT" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-3 px-4 text-white" placeholder="5000" disabled>
+                <p class="text-xs text-dark-500 mt-2">Requires restart to take effect</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- About -->
+    <div class="glass rounded-2xl p-6">
+        <h3 class="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+            <i data-lucide="info" class="w-5 h-5 text-accent-primary"></i>
+            About
+        </h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-dark-800/50 rounded-xl p-4">
+                <p class="text-xs text-dark-500 mb-1">Version</p>
+                <p class="text-lg font-medium text-white">2.0.0</p>
+            </div>
+            <div class="bg-dark-800/50 rounded-xl p-4">
+                <p class="text-xs text-dark-500 mb-1">Multi-Account</p>
+                <p class="text-lg font-medium text-success">Enabled</p>
+            </div>
+            <div class="bg-dark-800/50 rounded-xl p-4">
+                <p class="text-xs text-dark-500 mb-1">WebSocket</p>
+                <p class="text-lg font-medium text-success">Connected</p>
+            </div>
+        </div>
+        
+        <div class="mt-6 p-4 bg-dark-800/50 rounded-xl">
+            <h4 class="text-sm font-medium text-white mb-3">Features</h4>
+            <ul class="space-y-2 text-sm text-dark-300">
+                <li class="flex items-center gap-2">
+                    <i data-lucide="check" class="w-4 h-4 text-success"></i>
+                    Multiple OCI account support
+                </li>
+                <li class="flex items-center gap-2">
+                    <i data-lucide="check" class="w-4 h-4 text-success"></i>
+                    Real-time log streaming
+                </li>
+                <li class="flex items-center gap-2">
+                    <i data-lucide="check" class="w-4 h-4 text-success"></i>
+                    Telegram notifications
+                </li>
+                <li class="flex items-center gap-2">
+                    <i data-lucide="check" class="w-4 h-4 text-success"></i>
+                    Adaptive retry intervals
+                </li>
+                <li class="flex items-center gap-2">
+                    <i data-lucide="check" class="w-4 h-4 text-success"></i>
+                    Resource monitoring
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Load settings
+    async function loadSettings() {
+        try {
+            const response = await fetch('/api/settings');
+            const settings = await response.json();
+            
+            document.getElementById('WEB_USERNAME').value = settings.WEB_USERNAME || 'admin';
+            document.getElementById('ACCOUNTS_DIR').value = settings.ACCOUNTS_DIR || './accounts';
+            document.getElementById('WEB_PORT').value = settings.WEB_PORT || '5000';
+            
+        } catch (error) {
+            console.error('Failed to load settings:', error);
+        }
+    }
+    
+    // Save settings
+    async function saveSettings() {
+        const settings = {
+            WEB_USERNAME: document.getElementById('WEB_USERNAME').value,
+            ACCOUNTS_DIR: document.getElementById('ACCOUNTS_DIR').value
+        };
+        
+        const password = document.getElementById('WEB_PASSWORD').value;
+        if (password) {
+            settings.WEB_PASSWORD = password;
+        }
+        
+        try {
+            const response = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(settings)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showToast('Settings saved successfully', 'success');
+                
+                if (password) {
+                    setTimeout(() => {
+                        window.location.href = '/logout';
+                    }, 1500);
+                }
+            } else {
+                showToast(result.message || 'Failed to save', 'error');
+            }
+        } catch (error) {
+            showToast('Failed to save settings', 'error');
+        }
+    }
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+        loadSettings();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,26 @@
+[Unit]
+Description=OCI Admin Panel - Multi-Account Manager
+Documentation=https://github.com/your-repo/oci-admin-panel
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/root/oci-admin-panel
+Environment="PATH=/root/oci-admin-panel/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="PYTHONUNBUFFERED=1"
+ExecStart=/root/oci-admin-panel/venv/bin/python /root/oci-admin-panel/app.py
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

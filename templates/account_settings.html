@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+
+{% block title %}Account Settings - OCI Manager{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <a href="/account/{{ account_id }}" class="p-2 rounded-lg hover:bg-dark-800 text-dark-400 hover:text-white transition-all">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </a>
+            <div>
+                <h1 class="text-2xl font-bold text-white mb-1" id="account-name">Account Settings</h1>
+                <p class="text-dark-400">Configure account credentials and instance settings</p>
+            </div>
+        </div>
+        <button onclick="saveSettings()" class="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-semibold hover:shadow-lg hover:shadow-accent-primary/30 transition-all transform hover:scale-[1.02] active:scale-[0.98]">
+            <i data-lucide="save" class="w-5 h-5"></i>
+            <span>Save Changes</span>
+        </button>
+    </div>
+    
+    <!-- Settings Form -->
+    <div class="space-y-6">
+        <!-- Account Info -->
+        <div class="glass rounded-2xl p-6">
+            <h3 class="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+                <i data-lucide="user" class="w-5 h-5 text-accent-primary"></i>
+                Account Information
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-dark-300 mb-2">Account Name</label>
+                    <input type="text" id="ACCOUNT_NAME" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-3 px-4 text-white" placeholder="My OCI Account">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-dark-300 mb-2">Region</label>
+                    <select id="OCI_REGION" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-3 px-4 text-white">
+                        <option value="eu-frankfurt-1">EU Frankfurt (eu-frankfurt-1)</option>
+                        <option value="eu-amsterdam-1">EU Amsterdam (eu-amsterdam-1)</option>
+                        <option value="eu-zurich-1">EU Zurich (eu-zurich-1)</option>
+                        <option value="eu-madrid-1">EU Madrid (eu-madrid-1)</option>
+                        <option value="eu-marseille-1">EU Marseille (eu-marseille-1)</option>
+                        <option value="eu-milan-1">EU Milan (eu-milan-1)</option>
+                        <option value="eu-paris-1">EU Paris (eu-paris-1)</option>
+                        <option value="eu-stockholm-1">EU Stockholm (eu-stockholm-1)</option>
+                        <option value="us-ashburn-1">US Ashburn (us-ashburn-1)</option>
+                        <option value="us-phoenix-1">US Phoenix (us-phoenix-1)</option>
+                        <option value="us-sanjose-1">US San Jose (us-sanjose-1)</option>
+                        <option value="us-chicago-1">US Chicago (us-chicago-1)</option>
+                        <option value="uk-london-1">UK London (uk-london-1)</option>
+                        <option value="uk-cardiff-1">UK Cardiff (uk-cardiff-1)</option>
+                        <option value="ap-tokyo-1">AP Tokyo (ap-tokyo-1)</option>
+                        <option value="ap-osaka-1">AP Osaka (ap-osaka-1)</option>
+                        <option value="ap-seoul-1">AP Seoul (ap-seoul-1)</option>
+                        <option value="ap-chuncheon-1">AP Chuncheon (ap-chuncheon-1)</option>
+                        <option value="ap-singapore-1">AP Singapore (ap-singapore-1)</option>
+                        <option value="ap-sydney-1">AP Sydney (ap-sydney-1)</option>
+                        <option value="ap-melbourne-1">AP Melbourne (ap-melbourne-1)</option>
+                        <option value="ap-mumbai-1">AP Mumbai (ap-mumbai-1)</option>
+                        <option value="ap-hyderabad-1">AP Hyderabad (ap-hyderabad-1)</option>
+                        <option value="sa-saopaulo-1">SA Sao Paulo (sa-saopaulo-1)</option>
+                        <option value="sa-santiago-1">SA Santiago (sa-santiago-1)</option>
+                        <option value="sa-vinhedo-1">SA Vinhedo (sa-vinhedo-1)</option>
+                        <option value="ca-toronto-1">CA Toronto (ca-toronto-1)</option>
+                        <option value="ca-montreal-1">CA Montreal (ca-montreal-1)</option>
+                        <option value="me-jeddah-1">ME Jeddah (me-jeddah-1)</option>
+                        <option value="me-dubai-1">ME Dubai (me-dubai-1)</option>
+                        <option value="me-abudhabi-1">ME Abu Dhabi (me-abudhabi-1)</option>
+                        <option value="af-johannesburg-1">AF Johannesburg (af-johannesburg-1)</option>
+                        <option value="il-jerusalem-1">IL Jerusalem (il-jerusalem-1)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- OCI API Credentials -->
+        <div class="glass rounded-2xl p-6">
+            <h3 class="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+                <i data-lucide="key" class="w-5 h-5 text-accent-primary"></i>
+                OCI API Credentials
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-dark-300 mb-2">Tenancy OCID</label>
+                    <input type="text" id="OCI_TENANCY_ID" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-3 px-4 text-white font-mono text-sm" placeholder="ocid1.tenancy.oc1..">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-dark-300 mb-2">User OCID</label>
+                    <input type="text" id="OCI_USER_ID" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-3 px-4 text-white font-mono text-sm" placeholder="ocid1.user.oc1..">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-dark-300 mb-2">Key Fingerprint</label>
+                    <input type="text" id="OCI_KEY_FINGERPRINT" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-3 px-4 text-white font-mono text-sm" placeholder="xx:xx:xx:xx:...">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-dark-300 mb-2">Private Key File Path</label>
+                    <input type="text" id="OCI_PRIVATE_KEY_FILENAME" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-3 px-4 text-white" placeholder="/path/to/private-key.pem">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Network Settings -->
+        <div class="glass rounded-2xl p-6">
+            <h3 class="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+                <i data-lucide="network" class="w-5 h-5 text-accent-primary"></i>
+                Network Settings
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-dark-300 mb-2">Subnet OCID</label>
+                    <input type="text" id="OCI_SUBNET_ID" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-3 px-4 text-white font-mono text-sm" placeholder="ocid1.subnet.oc1..">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-dark-300 mb-2">Availability Domain (optional)</label>
+                    <input type="text" id="OCI_AVAILABILITY_DOMAIN" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-3 px-4 text-white font-mono text-sm" placeholder="Leave empty for all ADs">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Instance Settings -->
+        <div class="glass rounded-2xl p-6">
+            <h3 class="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+                <i data-lucide="server" class="w-5 h-5 text-accent-primary"></i>
+                Instance Settings
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-dark-300 mb-2">Shape</label>
+                    <select id="OCI_SHAPE" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-3 px-4 text-white" onchange="updateShapeLimits()">
+                        <option value="VM.Standard.A1.Flex">VM.Standard.A1.Flex (ARM - 4 OCPU / 24 GB Free)</option>
+                        <option value="VM.Standard.E2.1.Micro">VM.Standard.E2.1.Micro (AMD - 1 OCPU / 1 GB Free)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-dark-300 mb-2">Display Name</label>
+                    <input type="text" id="OCI_DISPLAY_NAME" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-3 px-4 text-white" placeholder="my-instance">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-dark-300 mb-2">OCPUs</label>
+                    <input type="number" id="OCI_OCPUS" min="1" max="4" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-3 px-4 text-white" value="4">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-dark-300 mb-2">Memory (GB)</label>
+                    <input type="number" id="OCI_MEMORY_IN_GBS" min="1" max="24" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-3 px-4 text-white" value="24">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-dark-300 mb-2">Image OCID</label>
+                    <input type="text" id="OCI_IMAGE_ID" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-3 px-4 text-white font-mono text-sm" placeholder="ocid1.image.oc1..">
+                    <p class="text-xs text-dark-500 mt-2">
+                        <a href="https://docs.oracle.com/en-us/iaas/images/" target="_blank" class="text-accent-primary hover:underline">Find OS images here →</a>
+                    </p>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-dark-300 mb-2">SSH Public Key</label>
+                    <textarea id="OCI_SSH_PUBLIC_KEY" rows="3" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-3 px-4 text-white font-mono text-sm resize-none" placeholder="ssh-rsa AAAA..."></textarea>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Retry Settings -->
+        <div class="glass rounded-2xl p-6">
+            <h3 class="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+                <i data-lucide="timer" class="w-5 h-5 text-accent-primary"></i>
+                Retry Settings
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-dark-300 mb-2">Initial Retry Interval (sec)</label>
+                    <input type="number" id="OCI_RETRY_INTERVAL" min="5" max="300" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-3 px-4 text-white" value="30">
+                    <p class="text-xs text-dark-500 mt-2">Başlangıç bekleme süresi</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-dark-300 mb-2">Minimum Retry Interval (sec)</label>
+                    <input type="number" id="OCI_MIN_RETRY_INTERVAL" min="5" max="300" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-3 px-4 text-white" value="10">
+                    <p class="text-xs text-dark-500 mt-2">Minimum bekleme süresi</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-dark-300 mb-2">Maximum Retry Interval (sec)</label>
+                    <input type="number" id="OCI_MAX_RETRY_INTERVAL" min="30" max="600" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-3 px-4 text-white" value="120">
+                    <p class="text-xs text-dark-500 mt-2">Rate limit durumunda max süre</p>
+                </div>
+            </div>
+            
+            <div class="mt-4 p-4 bg-info/10 border border-info/30 rounded-xl">
+                <div class="flex items-start gap-3">
+                    <i data-lucide="info" class="w-5 h-5 text-info flex-shrink-0 mt-0.5"></i>
+                    <div class="text-sm text-dark-300">
+                        <p class="font-medium text-white mb-1">Önerilen Değerler</p>
+                        <p>Ban riski azaltmak için: Initial: 30s, Min: 10s, Max: 120s</p>
+                        <p class="mt-1">Daha agresif: Initial: 10s, Min: 5s, Max: 60s</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Telegram Settings -->
+        <div class="glass rounded-2xl p-6">
+            <h3 class="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+                <i data-lucide="send" class="w-5 h-5 text-accent-primary"></i>
+                Telegram Notifications
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-dark-300 mb-2">Bot API Token</label>
+                    <input type="password" id="TELEGRAM_BOT_API_KEY" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-3 px-4 text-white font-mono text-sm" placeholder="123456789:ABC...">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-dark-300 mb-2">User ID</label>
+                    <input type="text" id="TELEGRAM_USER_ID" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-3 px-4 text-white font-mono" placeholder="123456789">
+                </div>
+            </div>
+            <div class="mt-4 p-4 bg-info/10 border border-info/30 rounded-xl">
+                <div class="flex items-start gap-3">
+                    <i data-lucide="info" class="w-5 h-5 text-info flex-shrink-0 mt-0.5"></i>
+                    <div class="text-sm text-dark-300">
+                        <p>Get your bot token from <a href="https://t.me/BotFather" target="_blank" class="text-accent-primary hover:underline">@BotFather</a> and your User ID from <a href="https://t.me/userinfobot" target="_blank" class="text-accent-primary hover:underline">@userinfobot</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Danger Zone -->
+        <div class="glass rounded-2xl p-6 border border-danger/30">
+            <h3 class="text-lg font-semibold text-danger mb-6 flex items-center gap-2">
+                <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                Danger Zone
+            </h3>
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-white font-medium">Delete this account</p>
+                    <p class="text-sm text-dark-400">This action cannot be undone</p>
+                </div>
+                <button onclick="deleteAccount()" class="px-6 py-3 rounded-xl bg-danger/20 text-danger hover:bg-danger/30 font-medium transition-all">
+                    Delete Account
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const accountId = '{{ account_id }}';
+    
+    const settingFields = [
+        'ACCOUNT_NAME', 'OCI_REGION', 'OCI_TENANCY_ID', 'OCI_USER_ID',
+        'OCI_KEY_FINGERPRINT', 'OCI_PRIVATE_KEY_FILENAME', 'OCI_SUBNET_ID',
+        'OCI_AVAILABILITY_DOMAIN', 'OCI_SHAPE', 'OCI_DISPLAY_NAME',
+        'OCI_OCPUS', 'OCI_MEMORY_IN_GBS', 'OCI_IMAGE_ID', 'OCI_SSH_PUBLIC_KEY',
+        'OCI_RETRY_INTERVAL', 'OCI_MIN_RETRY_INTERVAL', 'OCI_MAX_RETRY_INTERVAL',
+        'TELEGRAM_BOT_API_KEY', 'TELEGRAM_USER_ID'
+    ];
+    
+    // Load settings
+    async function loadSettings() {
+        try {
+            const response = await fetch(`/api/accounts/${accountId}`);
+            const config = await response.json();
+            
+            document.getElementById('account-name').textContent = `${config.ACCOUNT_NAME || 'Account'} Settings`;
+            
+            settingFields.forEach(field => {
+                const el = document.getElementById(field);
+                if (el && config[field]) {
+                    el.value = config[field];
+                }
+            });
+            
+            updateShapeLimits();
+            
+        } catch (error) {
+            console.error('Failed to load settings:', error);
+            showToast('Failed to load settings', 'error');
+        }
+    }
+    
+    // Save settings
+    async function saveSettings() {
+        const settings = {};
+        
+        settingFields.forEach(field => {
+            const el = document.getElementById(field);
+            if (el) {
+                settings[field] = el.value;
+            }
+        });
+        
+        try {
+            const response = await fetch(`/api/accounts/${accountId}/settings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(settings)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showToast('Settings saved successfully', 'success');
+            } else {
+                showToast(result.message || 'Failed to save', 'error');
+            }
+        } catch (error) {
+            showToast('Failed to save settings', 'error');
+        }
+    }
+    
+    // Update shape limits
+    function updateShapeLimits() {
+        const shape = document.getElementById('OCI_SHAPE').value;
+        const ocpusEl = document.getElementById('OCI_OCPUS');
+        const memoryEl = document.getElementById('OCI_MEMORY_IN_GBS');
+        
+        if (shape === 'VM.Standard.E2.1.Micro') {
+            ocpusEl.max = 1;
+            memoryEl.max = 1;
+            if (parseInt(ocpusEl.value) > 1) ocpusEl.value = 1;
+            if (parseInt(memoryEl.value) > 1) memoryEl.value = 1;
+        } else {
+            ocpusEl.max = 4;
+            memoryEl.max = 24;
+        }
+    }
+    
+    // Delete account
+    async function deleteAccount() {
+        const name = document.getElementById('ACCOUNT_NAME').value || 'this account';
+        
+        if (!confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/accounts/${accountId}`, { method: 'DELETE' });
+            const result = await response.json();
+            
+            if (result.success) {
+                showToast('Account deleted', 'success');
+                setTimeout(() => {
+                    window.location.href = '/accounts';
+                }, 1000);
+            } else {
+                showToast(result.message, 'error');
+            }
+        } catch (error) {
+            showToast('Failed to delete account', 'error');
+        }
+    }
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+        loadSettings();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}OCI Manager{% endblock %}</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    },
+                    colors: {
+                        dark: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0',
+                            300: '#cbd5e1',
+                            400: '#94a3b8',
+                            500: '#64748b',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            850: '#172033',
+                            900: '#0f172a',
+                            950: '#0a0f1a'
+                        },
+                        accent: {
+                            primary: '#f97316',
+                            secondary: '#fb923c',
+                            glow: 'rgba(249, 115, 22, 0.15)'
+                        },
+                        success: '#10b981',
+                        warning: '#f59e0b',
+                        danger: '#ef4444',
+                        info: '#3b82f6'
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'fade-in': 'fadeIn 0.3s ease-out'
+                    },
+                    keyframes: {
+                        glow: {
+                            '0%': { boxShadow: '0 0 5px rgba(249, 115, 22, 0.3)' },
+                            '100%': { boxShadow: '0 0 20px rgba(249, 115, 22, 0.6)' }
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(10px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' }
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        
+        /* Glass effect */
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(71, 85, 105, 0.3);
+        }
+        
+        /* Gradient text */
+        .gradient-text {
+            background: linear-gradient(135deg, #f97316 0%, #fb923c 50%, #fbbf24 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Card hover */
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px -10px rgba(249, 115, 22, 0.2);
+            border-color: rgba(249, 115, 22, 0.3);
+        }
+        
+        /* Status dot animation */
+        .status-dot {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        /* Progress bar */
+        .progress-bar {
+            background: linear-gradient(90deg, #f97316 0%, #fb923c 100%);
+            box-shadow: 0 0 10px rgba(249, 115, 22, 0.5);
+        }
+        
+        /* Input focus */
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #f97316;
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+        }
+        
+        /* Button glow */
+        .btn-glow {
+            box-shadow: 0 0 20px rgba(249, 115, 22, 0.4);
+        }
+        .btn-glow:hover {
+            box-shadow: 0 0 30px rgba(249, 115, 22, 0.6);
+        }
+        
+        /* Terminal style logs */
+        .log-terminal {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+        
+        /* Sidebar active link */
+        .nav-link.active {
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.15) 0%, rgba(251, 146, 60, 0.1) 100%);
+            border-left: 3px solid #f97316;
+        }
+        
+        /* Toast notification */
+        .toast {
+            animation: slideUp 0.3s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-dark-950 text-dark-100 font-sans min-h-screen">
+    <!-- Background pattern -->
+    <div class="fixed inset-0 z-0 opacity-30">
+        <div class="absolute inset-0" style="background-image: radial-gradient(circle at 25px 25px, rgba(71, 85, 105, 0.15) 2px, transparent 0); background-size: 50px 50px;"></div>
+        <div class="absolute top-0 left-1/4 w-96 h-96 bg-accent-primary/5 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-accent-secondary/5 rounded-full blur-3xl"></div>
+    </div>
+    
+    <div class="relative z-10 flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-dark-900/80 backdrop-blur-xl border-r border-dark-700/50 flex flex-col fixed h-full">
+            <!-- Logo -->
+            <div class="p-6 border-b border-dark-700/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center shadow-lg">
+                        <i data-lucide="cloud" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg gradient-text">OCI Manager</h1>
+                        <p class="text-xs text-dark-400">Instance Controller</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Navigation -->
+            <nav class="flex-1 p-4 space-y-1">
+                <a href="{{ url_for('dashboard') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-dark-300 hover:text-white hover:bg-dark-800/50 transition-all {% if request.endpoint == 'dashboard' %}active text-white{% endif %}">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('accounts_page') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-dark-300 hover:text-white hover:bg-dark-800/50 transition-all {% if request.endpoint in ['accounts_page', 'account_detail', 'account_settings'] %}active text-white{% endif %}">
+                    <i data-lucide="users" class="w-5 h-5"></i>
+                    <span>Accounts</span>
+                </a>
+                <a href="{{ url_for('logs_page') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-dark-300 hover:text-white hover:bg-dark-800/50 transition-all {% if request.endpoint == 'logs_page' %}active text-white{% endif %}">
+                    <i data-lucide="terminal" class="w-5 h-5"></i>
+                    <span>Logs</span>
+                </a>
+                <a href="{{ url_for('settings') }}" class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-dark-300 hover:text-white hover:bg-dark-800/50 transition-all {% if request.endpoint == 'settings' %}active text-white{% endif %}">
+                    <i data-lucide="settings" class="w-5 h-5"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+            
+            <!-- Bot Status Widget -->
+            <div class="p-4 border-t border-dark-700/50">
+                <div class="glass rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-sm text-dark-400">Bot Status</span>
+                        <div id="bot-status-indicator" class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-dark-500"></span>
+                            <span class="text-xs text-dark-400">Offline</span>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="btn-start-bot" onclick="startBot()" class="flex-1 py-2 px-3 rounded-lg bg-success/20 text-success hover:bg-success/30 text-sm font-medium transition-all flex items-center justify-center gap-2">
+                            <i data-lucide="play" class="w-4 h-4"></i>
+                            Start
+                        </button>
+                        <button id="btn-stop-bot" onclick="stopBot()" class="flex-1 py-2 px-3 rounded-lg bg-danger/20 text-danger hover:bg-danger/30 text-sm font-medium transition-all flex items-center justify-center gap-2">
+                            <i data-lucide="square" class="w-4 h-4"></i>
+                            Stop
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- User -->
+            <div class="p-4 border-t border-dark-700/50">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-dark-700 flex items-center justify-center">
+                            <i data-lucide="user" class="w-5 h-5 text-dark-300"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium">{{ session.get('username', 'Admin') }}</p>
+                            <p class="text-xs text-dark-500">Administrator</p>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('logout') }}" class="p-2 rounded-lg hover:bg-dark-800 text-dark-400 hover:text-white transition-all" title="Logout">
+                        <i data-lucide="log-out" class="w-5 h-5"></i>
+                    </a>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="flex-1 ml-64 p-8">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
+    
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // WebSocket connection
+        const socket = io('/logs', {
+            transports: ['websocket', 'polling']
+        });
+        
+        socket.on('connect', () => {
+            console.log('WebSocket connected');
+        });
+        
+        socket.on('bot_status', (status) => {
+            updateBotStatusIndicator(status);
+        });
+        
+        // Update bot status indicator
+        function updateBotStatusIndicator(status) {
+            const indicator = document.getElementById('bot-status-indicator');
+            if (indicator) {
+                if (status.running) {
+                    indicator.innerHTML = `
+                        <span class="w-2 h-2 rounded-full bg-success status-dot"></span>
+                        <span class="text-xs text-success">Running</span>
+                    `;
+                } else {
+                    indicator.innerHTML = `
+                        <span class="w-2 h-2 rounded-full bg-dark-500"></span>
+                        <span class="text-xs text-dark-400">Offline</span>
+                    `;
+                }
+            }
+        }
+        
+        // Start bot
+        async function startBot() {
+            try {
+                const response = await fetch('/api/bot/start', { method: 'POST' });
+                const data = await response.json();
+                showToast(data.message, data.success ? 'success' : 'error');
+                if (data.success) {
+                    updateBotStatusIndicator(data.status);
+                }
+            } catch (error) {
+                showToast('Failed to start bot', 'error');
+            }
+        }
+        
+        // Stop bot
+        async function stopBot() {
+            try {
+                const response = await fetch('/api/bot/stop', { method: 'POST' });
+                const data = await response.json();
+                showToast(data.message, data.success ? 'success' : 'error');
+                if (data.success) {
+                    updateBotStatusIndicator(data.status);
+                }
+            } catch (error) {
+                showToast('Failed to stop bot', 'error');
+            }
+        }
+        
+        // Toast notification
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const colors = {
+                success: 'bg-success/20 border-success/30 text-success',
+                error: 'bg-danger/20 border-danger/30 text-danger',
+                warning: 'bg-warning/20 border-warning/30 text-warning',
+                info: 'bg-info/20 border-info/30 text-info'
+            };
+            
+            const icons = {
+                success: 'check-circle',
+                error: 'x-circle',
+                warning: 'alert-triangle',
+                info: 'info'
+            };
+            
+            toast.className = `toast glass ${colors[type]} px-4 py-3 rounded-xl border flex items-center gap-3 min-w-[300px]`;
+            toast.innerHTML = `
+                <i data-lucide="${icons[type]}" class="w-5 h-5 flex-shrink-0"></i>
+                <span class="text-sm">${message}</span>
+            `;
+            
+            container.appendChild(toast);
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                toast.style.transition = 'all 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+        
+        // Fetch initial bot status
+        async function fetchBotStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                updateBotStatusIndicator(data.bot);
+            } catch (error) {
+                console.error('Failed to fetch bot status');
+            }
+        }
+        
+        fetchBotStatus();
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

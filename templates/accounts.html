@@ -1,0 +1,551 @@
+{% extends "base.html" %}
+
+{% block title %}Accounts - OCI Manager{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-white mb-1">Accounts</h1>
+            <p class="text-dark-400">Manage your Oracle Cloud accounts</p>
+        </div>
+        <button onclick="openAddModal()" class="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-semibold hover:shadow-lg hover:shadow-accent-primary/30 transition-all transform hover:scale-[1.02] active:scale-[0.98]">
+            <i data-lucide="plus" class="w-5 h-5"></i>
+            <span>Add Account</span>
+        </button>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="flex gap-4">
+        <button onclick="startAllBots()" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-success/20 border border-success/30 text-success hover:bg-success/30 transition-all">
+            <i data-lucide="play" class="w-4 h-4"></i>
+            Start All Bots
+        </button>
+        <button onclick="stopAllBots()" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-danger/20 border border-danger/30 text-danger hover:bg-danger/30 transition-all">
+            <i data-lucide="square" class="w-4 h-4"></i>
+            Stop All Bots
+        </button>
+    </div>
+    
+    <!-- Accounts List -->
+    <div id="accounts-container" class="space-y-4">
+        <div class="text-center py-12 text-dark-500">
+            <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-3"></i>
+            <p>Loading accounts...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Account Modal -->
+<div id="account-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal()"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="relative bg-dark-900 border border-dark-700 rounded-2xl w-full max-w-2xl my-8 shadow-2xl" onclick="event.stopPropagation()">
+            <div class="p-6 border-b border-dark-700">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-semibold text-white" id="modal-title">Add New Account</h3>
+                    <button onclick="closeModal()" class="p-2 rounded-lg hover:bg-dark-800 text-dark-400 hover:text-white transition-all">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6 max-h-[70vh] overflow-y-auto">
+                <form id="account-form" class="space-y-6">
+                    <input type="hidden" id="form-account-id">
+                    
+                    <!-- Account Name -->
+                    <div>
+                        <label class="block text-sm font-medium text-dark-300 mb-2">Account Name *</label>
+                        <input type="text" id="form-name" required class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-3 px-4 text-white placeholder-dark-500" placeholder="My OCI Account">
+                    </div>
+                    
+                    <!-- OCI Credentials Section -->
+                    <div class="border-t border-dark-700 pt-6">
+                        <h4 class="text-sm font-medium text-dark-300 mb-4 flex items-center gap-2">
+                            <i data-lucide="key" class="w-4 h-4"></i>
+                            OCI API Credentials
+                        </h4>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs text-dark-400 mb-1">Region</label>
+                                <select id="form-region" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-2.5 px-4 text-white text-sm">
+                                    <option value="eu-frankfurt-1">EU Frankfurt</option>
+                                    <option value="eu-amsterdam-1">EU Amsterdam</option>
+                                    <option value="us-ashburn-1">US Ashburn</option>
+                                    <option value="us-phoenix-1">US Phoenix</option>
+                                    <option value="uk-london-1">UK London</option>
+                                    <option value="ap-tokyo-1">AP Tokyo</option>
+                                    <option value="ap-osaka-1">AP Osaka</option>
+                                    <option value="ap-seoul-1">AP Seoul</option>
+                                    <option value="ap-singapore-1">AP Singapore</option>
+                                    <option value="ap-sydney-1">AP Sydney</option>
+                                    <option value="ap-melbourne-1">AP Melbourne</option>
+                                    <option value="ap-mumbai-1">AP Mumbai</option>
+                                    <option value="ap-hyderabad-1">AP Hyderabad</option>
+                                    <option value="sa-saopaulo-1">SA Sao Paulo</option>
+                                    <option value="sa-santiago-1">SA Santiago</option>
+                                    <option value="ca-toronto-1">CA Toronto</option>
+                                    <option value="ca-montreal-1">CA Montreal</option>
+                                    <option value="me-jeddah-1">ME Jeddah</option>
+                                    <option value="me-dubai-1">ME Dubai</option>
+                                    <option value="af-johannesburg-1">AF Johannesburg</option>
+                                    <option value="il-jerusalem-1">IL Jerusalem</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-dark-400 mb-1">Tenancy OCID *</label>
+                                <input type="text" id="form-tenancy" required class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-2.5 px-4 text-white placeholder-dark-500 text-sm font-mono" placeholder="ocid1.tenancy.oc1..">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-dark-400 mb-1">User OCID *</label>
+                                <input type="text" id="form-user" required class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-2.5 px-4 text-white placeholder-dark-500 text-sm font-mono" placeholder="ocid1.user.oc1..">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-dark-400 mb-1">Key Fingerprint *</label>
+                                <input type="text" id="form-fingerprint" required class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-2.5 px-4 text-white placeholder-dark-500 text-sm font-mono" placeholder="xx:xx:xx:xx:...">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs text-dark-400 mb-1">Private Key File Path *</label>
+                                <input type="text" id="form-keyfile" required class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-2.5 px-4 text-white placeholder-dark-500 text-sm" placeholder="/path/to/private-key.pem">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Instance Settings Section -->
+                    <div class="border-t border-dark-700 pt-6">
+                        <h4 class="text-sm font-medium text-dark-300 mb-4 flex items-center gap-2">
+                            <i data-lucide="server" class="w-4 h-4"></i>
+                            Instance Settings
+                        </h4>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs text-dark-400 mb-1">Shape</label>
+                                <select id="form-shape" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-2.5 px-4 text-white text-sm" onchange="updateShapeLimits()">
+                                    <option value="VM.Standard.A1.Flex">VM.Standard.A1.Flex (ARM)</option>
+                                    <option value="VM.Standard.E2.1.Micro">VM.Standard.E2.1.Micro (AMD)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-dark-400 mb-1">Display Name</label>
+                                <input type="text" id="form-displayname" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-2.5 px-4 text-white placeholder-dark-500 text-sm" placeholder="my-instance">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-dark-400 mb-1">OCPUs</label>
+                                <input type="number" id="form-ocpus" min="1" max="4" value="4" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-2.5 px-4 text-white text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-dark-400 mb-1">Memory (GB)</label>
+                                <input type="number" id="form-memory" min="1" max="24" value="24" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-2.5 px-4 text-white text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-dark-400 mb-1">Subnet OCID *</label>
+                                <input type="text" id="form-subnet" required class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-2.5 px-4 text-white placeholder-dark-500 text-sm font-mono" placeholder="ocid1.subnet.oc1..">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-dark-400 mb-1">Availability Domain (optional)</label>
+                                <input type="text" id="form-ad" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-2.5 px-4 text-white placeholder-dark-500 text-sm font-mono" placeholder="Leave empty for all ADs">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs text-dark-400 mb-1">Image OCID *</label>
+                                <input type="text" id="form-image" required class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-2.5 px-4 text-white placeholder-dark-500 text-sm font-mono" placeholder="ocid1.image.oc1..">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs text-dark-400 mb-1">SSH Public Key *</label>
+                                <textarea id="form-sshkey" required rows="2" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-2.5 px-4 text-white placeholder-dark-500 text-sm font-mono resize-none" placeholder="ssh-rsa AAAA..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Telegram Section -->
+                    <div class="border-t border-dark-700 pt-6">
+                        <h4 class="text-sm font-medium text-dark-300 mb-4 flex items-center gap-2">
+                            <i data-lucide="send" class="w-4 h-4"></i>
+                            Telegram Notifications (Optional)
+                        </h4>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs text-dark-400 mb-1">Bot API Token</label>
+                                <input type="text" id="form-telegram-token" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-2.5 px-4 text-white placeholder-dark-500 text-sm font-mono" placeholder="123456789:ABC...">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-dark-400 mb-1">User ID</label>
+                                <input type="text" id="form-telegram-uid" class="w-full bg-dark-800/50 border border-dark-600 rounded-xl py-2.5 px-4 text-white placeholder-dark-500 text-sm font-mono" placeholder="123456789">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="p-6 border-t border-dark-700 flex justify-end gap-3">
+                <button onclick="closeModal()" class="px-6 py-2.5 rounded-xl bg-dark-800 text-dark-300 hover:text-white transition-all">
+                    Cancel
+                </button>
+                <button onclick="saveAccount()" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-medium hover:shadow-lg transition-all">
+                    Save Account
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let editingAccountId = null;
+    
+    // Load accounts
+    async function loadAccounts() {
+        try {
+            const response = await fetch('/api/accounts');
+            const accounts = await response.json();
+            renderAccounts(accounts);
+        } catch (error) {
+            console.error('Failed to load accounts:', error);
+            showToast('Failed to load accounts', 'error');
+        }
+    }
+    
+    // Render accounts
+    function renderAccounts(accounts) {
+        const container = document.getElementById('accounts-container');
+        
+        if (!accounts || accounts.length === 0) {
+            container.innerHTML = `
+                <div class="glass rounded-2xl p-12 text-center">
+                    <i data-lucide="cloud-off" class="w-16 h-16 text-dark-600 mx-auto mb-4"></i>
+                    <h3 class="text-lg font-medium text-white mb-2">No Accounts Yet</h3>
+                    <p class="text-dark-400 mb-6">Add your first Oracle Cloud account to get started</p>
+                    <button onclick="openAddModal()" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-accent-primary to-accent-secondary text-white font-medium hover:shadow-lg transition-all">
+                        <i data-lucide="plus" class="w-5 h-5"></i>
+                        Add Account
+                    </button>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+        
+        container.innerHTML = accounts.map(account => {
+            const isRunning = account.status?.running;
+            const retries = account.status?.retry_count || 0;
+            const lastError = account.status?.last_error || '';
+            const lastCheck = account.status?.last_check || '-';
+            
+            return `
+                <div class="glass rounded-2xl p-6">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-accent-primary/20 to-accent-secondary/20 flex items-center justify-center">
+                                <i data-lucide="cloud" class="w-7 h-7 text-accent-primary"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-white">${account.name}</h3>
+                                <p class="text-sm text-dark-400">${account.region}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg ${isRunning ? 'bg-success/20' : 'bg-dark-700'}">
+                                <span class="w-2 h-2 rounded-full ${isRunning ? 'bg-success animate-pulse' : 'bg-dark-500'}"></span>
+                                <span class="text-sm ${isRunning ? 'text-success' : 'text-dark-400'}">${isRunning ? 'Running' : 'Stopped'}</span>
+                            </div>
+                            
+                            <div class="flex gap-1">
+                                <button onclick="editAccount('${account.id}')" class="p-2 rounded-lg hover:bg-dark-700 text-dark-400 hover:text-white transition-all" title="Edit">
+                                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="deleteAccountConfirm('${account.id}', '${account.name}')" class="p-2 rounded-lg hover:bg-danger/20 text-dark-400 hover:text-danger transition-all" title="Delete">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 grid grid-cols-2 md:grid-cols-5 gap-4">
+                        <div class="bg-dark-800/50 rounded-xl p-4">
+                            <p class="text-xs text-dark-500 mb-1">Shape</p>
+                            <p class="text-sm font-medium text-white truncate">${account.shape}</p>
+                        </div>
+                        <div class="bg-dark-800/50 rounded-xl p-4">
+                            <p class="text-xs text-dark-500 mb-1">Resources</p>
+                            <p class="text-sm font-medium text-white">${account.ocpus} OCPU / ${account.memory} GB</p>
+                        </div>
+                        <div class="bg-dark-800/50 rounded-xl p-4">
+                            <p class="text-xs text-dark-500 mb-1">Retries</p>
+                            <p class="text-sm font-medium text-white">${retries}</p>
+                        </div>
+                        <div class="bg-dark-800/50 rounded-xl p-4">
+                            <p class="text-xs text-dark-500 mb-1">Last Check</p>
+                            <p class="text-xs font-medium text-white">${lastCheck}</p>
+                        </div>
+                        <div class="bg-dark-800/50 rounded-xl p-4">
+                            <p class="text-xs text-dark-500 mb-1">Last Error</p>
+                            <p class="text-xs font-medium text-danger truncate" title="${lastError}">${lastError || '-'}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 flex gap-3">
+                        ${isRunning ? `
+                            <button onclick="stopAccountBot('${account.id}')" class="flex-1 py-3 rounded-xl bg-danger/20 text-danger hover:bg-danger/30 font-medium transition-all flex items-center justify-center gap-2">
+                                <i data-lucide="square" class="w-5 h-5"></i>
+                                Stop Bot
+                            </button>
+                        ` : `
+                            <button onclick="startAccountBot('${account.id}')" class="flex-1 py-3 rounded-xl bg-success/20 text-success hover:bg-success/30 font-medium transition-all flex items-center justify-center gap-2">
+                                <i data-lucide="play" class="w-5 h-5"></i>
+                                Start Bot
+                            </button>
+                        `}
+                        <button onclick="testAccountConnection('${account.id}')" class="px-6 py-3 rounded-xl bg-dark-700 hover:bg-dark-600 text-white font-medium transition-all flex items-center gap-2">
+                            <i data-lucide="wifi" class="w-5 h-5"></i>
+                            Test
+                        </button>
+                        <a href="/account/${account.id}" class="px-6 py-3 rounded-xl bg-dark-700 hover:bg-dark-600 text-white font-medium transition-all flex items-center gap-2">
+                            <i data-lucide="external-link" class="w-5 h-5"></i>
+                            Details
+                        </a>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        lucide.createIcons();
+    }
+    
+    // Open add modal
+    function openAddModal() {
+        editingAccountId = null;
+        document.getElementById('modal-title').textContent = 'Add New Account';
+        document.getElementById('account-form').reset();
+        document.getElementById('account-modal').classList.remove('hidden');
+    }
+    
+    // Close modal
+    function closeModal() {
+        document.getElementById('account-modal').classList.add('hidden');
+        editingAccountId = null;
+    }
+    
+    // Edit account
+    async function editAccount(accountId) {
+        try {
+            const response = await fetch(`/api/accounts/${accountId}`);
+            const config = await response.json();
+            
+            editingAccountId = accountId;
+            document.getElementById('modal-title').textContent = 'Edit Account';
+            
+            // Fill form
+            document.getElementById('form-account-id').value = accountId;
+            document.getElementById('form-name').value = config.ACCOUNT_NAME || '';
+            document.getElementById('form-region').value = config.OCI_REGION || 'eu-frankfurt-1';
+            document.getElementById('form-tenancy').value = config.OCI_TENANCY_ID || '';
+            document.getElementById('form-user').value = config.OCI_USER_ID || '';
+            document.getElementById('form-fingerprint').value = config.OCI_KEY_FINGERPRINT || '';
+            document.getElementById('form-keyfile').value = config.OCI_PRIVATE_KEY_FILENAME || '';
+            document.getElementById('form-shape').value = config.OCI_SHAPE || 'VM.Standard.A1.Flex';
+            document.getElementById('form-displayname').value = config.OCI_DISPLAY_NAME || '';
+            document.getElementById('form-ocpus').value = config.OCI_OCPUS || '4';
+            document.getElementById('form-memory').value = config.OCI_MEMORY_IN_GBS || '24';
+            document.getElementById('form-subnet').value = config.OCI_SUBNET_ID || '';
+            document.getElementById('form-ad').value = config.OCI_AVAILABILITY_DOMAIN || '';
+            document.getElementById('form-image').value = config.OCI_IMAGE_ID || '';
+            document.getElementById('form-sshkey').value = config.OCI_SSH_PUBLIC_KEY || '';
+            document.getElementById('form-telegram-token').value = config.TELEGRAM_BOT_API_KEY || '';
+            document.getElementById('form-telegram-uid').value = config.TELEGRAM_USER_ID || '';
+            
+            document.getElementById('account-modal').classList.remove('hidden');
+        } catch (error) {
+            showToast('Failed to load account', 'error');
+        }
+    }
+    
+    // Save account
+    async function saveAccount() {
+        const data = {
+            name: document.getElementById('form-name').value,
+            region: document.getElementById('form-region').value,
+            tenancy_id: document.getElementById('form-tenancy').value,
+            user_id: document.getElementById('form-user').value,
+            fingerprint: document.getElementById('form-fingerprint').value,
+            key_file: document.getElementById('form-keyfile').value,
+            shape: document.getElementById('form-shape').value,
+            display_name: document.getElementById('form-displayname').value,
+            ocpus: document.getElementById('form-ocpus').value,
+            memory: document.getElementById('form-memory').value,
+            subnet_id: document.getElementById('form-subnet').value,
+            availability_domain: document.getElementById('form-ad').value,
+            image_id: document.getElementById('form-image').value,
+            ssh_key: document.getElementById('form-sshkey').value,
+            telegram_token: document.getElementById('form-telegram-token').value,
+            telegram_uid: document.getElementById('form-telegram-uid').value
+        };
+        
+        try {
+            let response;
+            if (editingAccountId) {
+                // Update existing
+                response = await fetch(`/api/accounts/${editingAccountId}/settings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ACCOUNT_NAME: data.name,
+                        OCI_REGION: data.region,
+                        OCI_TENANCY_ID: data.tenancy_id,
+                        OCI_USER_ID: data.user_id,
+                        OCI_KEY_FINGERPRINT: data.fingerprint,
+                        OCI_PRIVATE_KEY_FILENAME: data.key_file,
+                        OCI_SHAPE: data.shape,
+                        OCI_DISPLAY_NAME: data.display_name,
+                        OCI_OCPUS: data.ocpus,
+                        OCI_MEMORY_IN_GBS: data.memory,
+                        OCI_SUBNET_ID: data.subnet_id,
+                        OCI_AVAILABILITY_DOMAIN: data.availability_domain,
+                        OCI_IMAGE_ID: data.image_id,
+                        OCI_SSH_PUBLIC_KEY: data.ssh_key,
+                        TELEGRAM_BOT_API_KEY: data.telegram_token,
+                        TELEGRAM_USER_ID: data.telegram_uid
+                    })
+                });
+            } else {
+                // Create new
+                response = await fetch('/api/accounts/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+            }
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showToast(result.message, 'success');
+                closeModal();
+                loadAccounts();
+            } else {
+                showToast(result.message || 'Failed to save', 'error');
+            }
+        } catch (error) {
+            showToast('Failed to save account', 'error');
+        }
+    }
+    
+    // Delete account
+    function deleteAccountConfirm(accountId, accountName) {
+        if (confirm(`Are you sure you want to delete "${accountName}"? This action cannot be undone.`)) {
+            deleteAccount(accountId);
+        }
+    }
+    
+    async function deleteAccount(accountId) {
+        try {
+            const response = await fetch(`/api/accounts/${accountId}`, { method: 'DELETE' });
+            const result = await response.json();
+            
+            if (result.success) {
+                showToast('Account deleted', 'success');
+                loadAccounts();
+            } else {
+                showToast(result.message, 'error');
+            }
+        } catch (error) {
+            showToast('Failed to delete account', 'error');
+        }
+    }
+    
+    // Test connection
+    async function testAccountConnection(accountId) {
+        showToast('Testing connection...', 'info');
+        try {
+            const response = await fetch(`/api/accounts/${accountId}/test`);
+            const result = await response.json();
+            
+            if (result.success) {
+                showToast(`Connected to: ${result.data.name}`, 'success');
+            } else {
+                showToast(`Failed: ${result.data}`, 'error');
+            }
+        } catch (error) {
+            showToast('Connection test failed', 'error');
+        }
+    }
+    
+    // Start/Stop bot
+    async function startAccountBot(accountId) {
+        try {
+            const response = await fetch(`/api/accounts/${accountId}/bot/start`, { method: 'POST' });
+            const result = await response.json();
+            showToast(result.message, result.success ? 'success' : 'error');
+            if (result.success) loadAccounts();
+        } catch (error) {
+            showToast('Failed to start bot', 'error');
+        }
+    }
+    
+    async function stopAccountBot(accountId) {
+        try {
+            const response = await fetch(`/api/accounts/${accountId}/bot/stop`, { method: 'POST' });
+            const result = await response.json();
+            showToast(result.message, result.success ? 'success' : 'error');
+            if (result.success) loadAccounts();
+        } catch (error) {
+            showToast('Failed to stop bot', 'error');
+        }
+    }
+    
+    // Start/Stop all
+    async function startAllBots() {
+        try {
+            const response = await fetch('/api/bot/start-all', { method: 'POST' });
+            const result = await response.json();
+            showToast(result.message, 'success');
+            loadAccounts();
+        } catch (error) {
+            showToast('Failed to start bots', 'error');
+        }
+    }
+    
+    async function stopAllBots() {
+        try {
+            const response = await fetch('/api/bot/stop-all', { method: 'POST' });
+            const result = await response.json();
+            showToast(result.message, 'success');
+            loadAccounts();
+        } catch (error) {
+            showToast('Failed to stop bots', 'error');
+        }
+    }
+    
+    // Update shape limits
+    function updateShapeLimits() {
+        const shape = document.getElementById('form-shape').value;
+        if (shape === 'VM.Standard.E2.1.Micro') {
+            document.getElementById('form-ocpus').max = 1;
+            document.getElementById('form-ocpus').value = 1;
+            document.getElementById('form-memory').max = 1;
+            document.getElementById('form-memory').value = 1;
+        } else {
+            document.getElementById('form-ocpus').max = 4;
+            document.getElementById('form-ocpus').value = 4;
+            document.getElementById('form-memory').max = 24;
+            document.getElementById('form-memory').value = 24;
+        }
+    }
+    
+    // WebSocket updates
+    socket.on('bot_status', (data) => {
+        loadAccounts();
+    });
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+        loadAccounts();
+        setInterval(loadAccounts, 30000);
+    });
+</script>
+{% endblock %}

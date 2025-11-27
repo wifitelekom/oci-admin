@@ -1,0 +1,517 @@
+{% extends "base.html" %}
+
+{% block title %}Account Details - OCI Manager{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <a href="{{ url_for('accounts_page') }}" class="p-2 rounded-lg hover:bg-dark-800 text-dark-400 hover:text-white transition-all">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </a>
+            <div>
+                <h1 class="text-2xl font-bold text-white mb-1" id="account-name">Loading...</h1>
+                <p class="text-dark-400" id="account-region">-</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="testConnection()" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-dark-800 border border-dark-700 hover:border-accent-primary/50 text-dark-300 hover:text-white transition-all">
+                <i data-lucide="wifi" class="w-4 h-4"></i>
+                <span>Test Connection</span>
+            </button>
+            <a href="/account/{{ account_id }}/settings" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-dark-800 border border-dark-700 hover:border-accent-primary/50 text-dark-300 hover:text-white transition-all">
+                <i data-lucide="settings" class="w-4 h-4"></i>
+                <span>Settings</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Bot Status Card -->
+    <div class="glass rounded-2xl p-6">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-accent-primary/20 to-accent-secondary/20 flex items-center justify-center">
+                    <i data-lucide="bot" class="w-8 h-8 text-accent-primary"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-3 mb-1">
+                        <h3 class="text-lg font-semibold text-white">Bot Status</h3>
+                        <span id="bot-status-badge" class="px-3 py-1 rounded-full text-xs font-medium bg-dark-700 text-dark-400">
+                            Offline
+                        </span>
+                    </div>
+                    <p class="text-sm text-dark-400" id="bot-start-time">Not started</p>
+                </div>
+            </div>
+            
+            <div class="flex gap-3">
+                <button id="btn-start" onclick="startBot()" class="px-6 py-3 rounded-xl bg-success/20 text-success hover:bg-success/30 font-medium transition-all flex items-center gap-2">
+                    <i data-lucide="play" class="w-5 h-5"></i>
+                    Start
+                </button>
+                <button id="btn-stop" onclick="stopBot()" class="px-6 py-3 rounded-xl bg-danger/20 text-danger hover:bg-danger/30 font-medium transition-all flex items-center gap-2">
+                    <i data-lucide="square" class="w-5 h-5"></i>
+                    Stop
+                </button>
+            </div>
+        </div>
+        
+        <!-- Bot Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+            <div class="bg-dark-800/50 rounded-xl p-4">
+                <p class="text-xs text-dark-500 mb-1">Retry Count</p>
+                <p class="text-2xl font-bold text-white" id="retry-count">0</p>
+            </div>
+            <div class="bg-dark-800/50 rounded-xl p-4">
+                <p class="text-xs text-dark-500 mb-1">Current AD</p>
+                <p class="text-sm font-medium text-white font-mono" id="current-ad">-</p>
+            </div>
+            <div class="bg-dark-800/50 rounded-xl p-4">
+                <p class="text-xs text-dark-500 mb-1">Last Check</p>
+                <p class="text-xs font-medium text-white" id="last-check">-</p>
+            </div>
+            <div class="bg-dark-800/50 rounded-xl p-4">
+                <p class="text-xs text-dark-500 mb-1">Last Error</p>
+                <p class="text-xs font-medium text-danger truncate" id="last-error" title="">-</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Resources -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Compute -->
+        <div class="glass rounded-2xl p-6">
+            <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <i data-lucide="cpu" class="w-5 h-5 text-accent-primary"></i>
+                Compute
+            </h3>
+            <div class="space-y-4">
+                <div>
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="text-dark-400">OCPUs</span>
+                        <span class="text-white"><span id="used-ocpus">0</span> / <span id="max-ocpus">4</span></span>
+                    </div>
+                    <div class="h-2 bg-dark-700 rounded-full overflow-hidden">
+                        <div id="ocpus-bar" class="h-full progress-bar rounded-full transition-all" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="text-dark-400">Memory</span>
+                        <span class="text-white"><span id="used-memory">0</span> / <span id="max-memory">24</span> GB</span>
+                    </div>
+                    <div class="h-2 bg-dark-700 rounded-full overflow-hidden">
+                        <div id="memory-bar" class="h-full progress-bar rounded-full transition-all" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Storage -->
+        <div class="glass rounded-2xl p-6">
+            <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <i data-lucide="hard-drive" class="w-5 h-5 text-accent-primary"></i>
+                Storage
+            </h3>
+            <div class="relative w-32 h-32 mx-auto mb-4">
+                <canvas id="storageChart"></canvas>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="text-center">
+                        <span id="storage-percentage" class="text-2xl font-bold text-white">0%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-center gap-4 text-xs">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-accent-primary"></span>
+                    <span class="text-dark-400">Used: <span id="storage-used">0</span> GB</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-dark-600"></span>
+                    <span class="text-dark-400">Free: <span id="storage-free">200</span> GB</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Instances -->
+        <div class="glass rounded-2xl p-6">
+            <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <i data-lucide="server" class="w-5 h-5 text-accent-primary"></i>
+                Instances
+            </h3>
+            <div id="instances-summary" class="space-y-3">
+                <div class="text-center py-4 text-dark-500">
+                    <i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Instances Table -->
+    <div class="glass rounded-2xl overflow-hidden">
+        <div class="p-6 border-b border-dark-700/50">
+            <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                <i data-lucide="list" class="w-5 h-5 text-accent-primary"></i>
+                Instance List
+            </h3>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="bg-dark-800/50">
+                        <th class="text-left py-4 px-6 text-sm font-medium text-dark-400">Name</th>
+                        <th class="text-left py-4 px-6 text-sm font-medium text-dark-400">Shape</th>
+                        <th class="text-left py-4 px-6 text-sm font-medium text-dark-400">Resources</th>
+                        <th class="text-left py-4 px-6 text-sm font-medium text-dark-400">Status</th>
+                        <th class="text-left py-4 px-6 text-sm font-medium text-dark-400">Created</th>
+                    </tr>
+                </thead>
+                <tbody id="instances-table">
+                    <tr>
+                        <td colspan="5" class="py-12 text-center text-dark-500">
+                            <i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto"></i>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Logs -->
+    <div class="glass rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                <i data-lucide="terminal" class="w-5 h-5 text-accent-primary"></i>
+                Account Logs
+            </h3>
+            <button onclick="clearAccountLogs()" class="text-sm text-dark-400 hover:text-white transition-colors">
+                Clear
+            </button>
+        </div>
+        <div id="account-logs" class="log-terminal bg-dark-900 rounded-xl p-4 h-80 overflow-y-auto space-y-1">
+            <div class="text-dark-500 text-center py-8">No logs yet</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const accountId = '{{ account_id }}';
+    let storageChart = null;
+    
+    // Initialize storage chart
+    function initStorageChart() {
+        const ctx = document.getElementById('storageChart').getContext('2d');
+        storageChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                datasets: [{
+                    data: [0, 200],
+                    backgroundColor: ['#f97316', '#334155'],
+                    borderWidth: 0,
+                    cutout: '75%'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } }
+            }
+        });
+    }
+    
+    // Load account details
+    async function loadAccount() {
+        try {
+            const response = await fetch(`/api/accounts/${accountId}`);
+            const config = await response.json();
+            
+            document.getElementById('account-name').textContent = config.ACCOUNT_NAME || accountId;
+            document.getElementById('account-region').textContent = config.OCI_REGION || 'Unknown Region';
+            
+        } catch (error) {
+            console.error('Failed to load account:', error);
+        }
+    }
+    
+    // Load bot status
+    async function loadBotStatus() {
+        try {
+            const response = await fetch('/api/accounts');
+            const accounts = await response.json();
+            const account = accounts.find(a => a.id === accountId);
+            
+            if (account) {
+                updateBotStatus(account.status);
+            }
+        } catch (error) {
+            console.error('Failed to load bot status:', error);
+        }
+    }
+    
+    // Update bot status
+    function updateBotStatus(status) {
+        const badge = document.getElementById('bot-status-badge');
+        const isRunning = status?.running;
+        
+        if (isRunning) {
+            badge.className = 'px-3 py-1 rounded-full text-xs font-medium bg-success/20 text-success';
+            badge.textContent = 'Running';
+            document.getElementById('bot-start-time').textContent = `Started: ${status.start_time || '-'}`;
+        } else {
+            badge.className = 'px-3 py-1 rounded-full text-xs font-medium bg-dark-700 text-dark-400';
+            badge.textContent = 'Offline';
+            document.getElementById('bot-start-time').textContent = 'Not started';
+        }
+        
+        document.getElementById('retry-count').textContent = status?.retry_count || 0;
+        
+        const currentAd = status?.current_ad;
+        document.getElementById('current-ad').textContent = currentAd ? currentAd.split(':').pop() : '-';
+        
+        document.getElementById('last-check').textContent = status?.last_check || '-';
+        
+        const lastError = document.getElementById('last-error');
+        lastError.textContent = status?.last_error || '-';
+        lastError.title = status?.last_error || '';
+    }
+    
+    // Load compute
+    async function loadCompute() {
+        try {
+            const response = await fetch(`/api/accounts/${accountId}/compute`);
+            const data = await response.json();
+            
+            document.getElementById('used-ocpus').textContent = data.ocpus.used;
+            document.getElementById('max-ocpus').textContent = data.ocpus.max;
+            document.getElementById('ocpus-bar').style.width = `${(data.ocpus.used / data.ocpus.max) * 100}%`;
+            
+            document.getElementById('used-memory').textContent = data.memory.used;
+            document.getElementById('max-memory').textContent = data.memory.max;
+            document.getElementById('memory-bar').style.width = `${(data.memory.used / data.memory.max) * 100}%`;
+        } catch (error) {
+            console.error('Failed to load compute:', error);
+        }
+    }
+    
+    // Load storage
+    async function loadStorage() {
+        try {
+            const response = await fetch(`/api/accounts/${accountId}/storage`);
+            const data = await response.json();
+            
+            document.getElementById('storage-percentage').textContent = `${data.percentage}%`;
+            document.getElementById('storage-used').textContent = data.used;
+            document.getElementById('storage-free').textContent = data.free;
+            
+            if (storageChart) {
+                storageChart.data.datasets[0].data = [data.used, data.free];
+                storageChart.update();
+            }
+        } catch (error) {
+            console.error('Failed to load storage:', error);
+        }
+    }
+    
+    // Load instances
+    async function loadInstances() {
+        try {
+            const response = await fetch(`/api/accounts/${accountId}/instances`);
+            const instances = await response.json();
+            
+            // Summary
+            const running = instances.filter(i => i.state === 'RUNNING').length;
+            const total = instances.filter(i => !['TERMINATING', 'TERMINATED'].includes(i.state)).length;
+            
+            document.getElementById('instances-summary').innerHTML = `
+                <div class="text-center">
+                    <p class="text-3xl font-bold text-white">${running}</p>
+                    <p class="text-sm text-dark-400">Running / ${total} Total</p>
+                </div>
+            `;
+            
+            // Table
+            const table = document.getElementById('instances-table');
+            
+            if (instances.length === 0) {
+                table.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-12 text-center text-dark-500">
+                            <i data-lucide="inbox" class="w-10 h-10 mx-auto mb-2"></i>
+                            <p>No instances found</p>
+                        </td>
+                    </tr>
+                `;
+                lucide.createIcons();
+                return;
+            }
+            
+            table.innerHTML = instances.map(instance => {
+                const stateColors = {
+                    'RUNNING': 'bg-success/20 text-success',
+                    'STOPPED': 'bg-dark-600 text-dark-300',
+                    'STARTING': 'bg-warning/20 text-warning',
+                    'STOPPING': 'bg-warning/20 text-warning',
+                    'PROVISIONING': 'bg-info/20 text-info',
+                    'TERMINATING': 'bg-danger/20 text-danger',
+                    'TERMINATED': 'bg-dark-700 text-dark-500'
+                };
+                const stateClass = stateColors[instance.state] || 'bg-dark-600 text-dark-300';
+                
+                return `
+                    <tr class="border-t border-dark-700/30 hover:bg-dark-800/30 transition-colors">
+                        <td class="py-4 px-6 font-medium text-white">${instance.name}</td>
+                        <td class="py-4 px-6 text-sm text-dark-300 font-mono">${instance.shape}</td>
+                        <td class="py-4 px-6 text-sm text-white">${instance.ocpus} OCPU / ${instance.memory} GB</td>
+                        <td class="py-4 px-6">
+                            <span class="px-3 py-1 rounded-full text-xs font-medium ${stateClass}">${instance.state}</span>
+                        </td>
+                        <td class="py-4 px-6 text-sm text-dark-400">${instance.created}</td>
+                    </tr>
+                `;
+            }).join('');
+            
+        } catch (error) {
+            console.error('Failed to load instances:', error);
+        }
+    }
+    
+    // Load logs
+    async function loadLogs() {
+        try {
+            const response = await fetch(`/api/accounts/${accountId}/logs`);
+            const logs = await response.json();
+            renderLogs(logs);
+        } catch (error) {
+            console.error('Failed to load logs:', error);
+        }
+    }
+    
+    function renderLogs(logs) {
+        const container = document.getElementById('account-logs');
+        
+        if (!logs || logs.length === 0) {
+            container.innerHTML = '<div class="text-dark-500 text-center py-8">No logs yet</div>';
+            return;
+        }
+        
+        container.innerHTML = logs.map(log => {
+            const levelColors = {
+                'INFO': 'text-info',
+                'WARNING': 'text-warning',
+                'ERROR': 'text-danger',
+                'CRITICAL': 'text-danger'
+            };
+            const color = levelColors[log.level] || 'text-dark-300';
+            
+            return `
+                <div class="flex gap-3 py-1">
+                    <span class="text-dark-500 flex-shrink-0 text-xs">${log.timestamp}</span>
+                    <span class="${color} text-xs">${log.message}</span>
+                </div>
+            `;
+        }).join('');
+        
+        container.scrollTop = container.scrollHeight;
+    }
+    
+    // Test connection
+    async function testConnection() {
+        showToast('Testing connection...', 'info');
+        try {
+            const response = await fetch(`/api/accounts/${accountId}/test`);
+            const result = await response.json();
+            
+            if (result.success) {
+                showToast(`Connected to: ${result.data.name}`, 'success');
+            } else {
+                showToast(`Failed: ${result.data}`, 'error');
+            }
+        } catch (error) {
+            showToast('Connection test failed', 'error');
+        }
+    }
+    
+    // Start/Stop bot
+    async function startBot() {
+        try {
+            const response = await fetch(`/api/accounts/${accountId}/bot/start`, { method: 'POST' });
+            const result = await response.json();
+            showToast(result.message, result.success ? 'success' : 'error');
+            if (result.success) loadBotStatus();
+        } catch (error) {
+            showToast('Failed to start bot', 'error');
+        }
+    }
+    
+    async function stopBot() {
+        try {
+            const response = await fetch(`/api/accounts/${accountId}/bot/stop`, { method: 'POST' });
+            const result = await response.json();
+            showToast(result.message, result.success ? 'success' : 'error');
+            if (result.success) loadBotStatus();
+        } catch (error) {
+            showToast('Failed to stop bot', 'error');
+        }
+    }
+    
+    // Clear logs
+    function clearAccountLogs() {
+        document.getElementById('account-logs').innerHTML = '<div class="text-dark-500 text-center py-8">No logs yet</div>';
+    }
+    
+    // WebSocket
+    socket.on('log_message', (log) => {
+        if (log.account_id === accountId) {
+            const container = document.getElementById('account-logs');
+            if (container.querySelector('.text-center')) {
+                container.innerHTML = '';
+            }
+            
+            const levelColors = {
+                'INFO': 'text-info',
+                'WARNING': 'text-warning',
+                'ERROR': 'text-danger',
+                'CRITICAL': 'text-danger'
+            };
+            const color = levelColors[log.level] || 'text-dark-300';
+            
+            const entry = document.createElement('div');
+            entry.className = 'flex gap-3 py-1 animate-fade-in';
+            entry.innerHTML = `
+                <span class="text-dark-500 flex-shrink-0 text-xs">${log.timestamp}</span>
+                <span class="${color} text-xs">${log.message}</span>
+            `;
+            container.appendChild(entry);
+            container.scrollTop = container.scrollHeight;
+        }
+    });
+    
+    socket.on('bot_status', (data) => {
+        if (data.account_id === accountId) {
+            updateBotStatus(data.status);
+        }
+    });
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+        initStorageChart();
+        loadAccount();
+        loadBotStatus();
+        loadCompute();
+        loadStorage();
+        loadInstances();
+        loadLogs();
+        
+        setInterval(() => {
+            loadBotStatus();
+            loadCompute();
+            loadStorage();
+            loadInstances();
+        }, 30000);
+    });
+</script>
+{% endblock %}
